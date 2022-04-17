@@ -68,6 +68,14 @@ ZERO_SIGMA = -1 * 1e6
 
 SNIP_BATCH_ITERATIONS = 5
 
+
+SMALL_POOL = (2, 2)
+PROD_SMALL_POOL = np.prod(SMALL_POOL)
+MIDDLE_POOL = (3, 3)
+PROD_MIDDLE_POOL = np.prod(MIDDLE_POOL)
+BIG_POOL = (5, 5)
+PROD_BIG_POOL = np.prod(BIG_POOL)
+
 NUM_WORKERS = 6
 FLIP_CHANCE = 0.2
 
@@ -88,6 +96,16 @@ SINGLE_SHOT = [
     "IterativeGRASP",
     "UnstructuredRandom"
 ]
+
+SINGLE_SHOT += STRUCTURED_SINGLE_SHOT
+DURING_TRAINING = [
+    "SNAPitDuring",
+    "GateDecorators",
+    "CNIPitDuring",
+    "GroupHoyerSquare",
+    "EfficientConvNets"
+]
+
 
 TIMEOUT = int(60 * 60 * 1.7) # one hour and a 45 minutes max
 STACK_NAME = "command_stack"
