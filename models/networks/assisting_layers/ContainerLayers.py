@@ -27,7 +27,7 @@ class ContainerLinear(nn.Linear):
     def reset_parameters(self):
         init.orthogonal_(self.weight,self.gain)
         if self.bias is not None:
-            fan_in,_=init._calculate_fan_in_and_fan_out(self,weight)
+            fan_in,_=init._calculate_fan_in_and_fan_out(self.weight)
             bound = 1/ math.sqrt(fan_in)
             init.uniform_(self.bias,-bound,bound)
     
@@ -55,7 +55,7 @@ class ContainerConv2d(nn.Conv2d):
         super(ContainerConv2d,self).__init__(in_channels,
                                              out_channels,
                                              kernel_size,
-                                             stridee=stride,
+                                             stride=stride,
                                              padding=padding,
                                              dilation=dilation,
                                              groups=groups,
@@ -68,7 +68,7 @@ class ContainerConv2d(nn.Conv2d):
     def reset_parameters(self):
         init.orthogonal_(self.weight,self.gain)
         if self.bias is not None:
-            fan_in,_=init._calculate_fan_in_and_fan_out(self,weight)
+            fan_in,_=init._calculate_fan_in_and_fan_out(self.weight)
             bound = 1/ math.sqrt(fan_in)
             init.uniform_(self.bias,-bound,bound)
     
