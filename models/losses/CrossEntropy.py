@@ -1,6 +1,6 @@
 import torch
 from torch import nn 
-from model.GeneralModel import GeneralModel
+from models.GeneralModel import GeneralModel
 
 class CrossEntropy(GeneralModel):
     def __init__(self,device,l1_reg=0,lp_reg=0,**kwargs):

@@ -17,7 +17,7 @@ class BasicBlock(nn.Module):
             nn.Conv2d(in_channels,out_channels,kernel_size=3,stride=stride,padding=1,bias=False),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(inplace=True),
-            nn.conv2d(out_channels,out_channels*BasicBlock.expansion,kernel_size=3,padding=1,bias=False),
+            nn.Conv2d(out_channels,out_channels*BasicBlock.expansion,kernel_size=3,padding=1,bias=False),
             nn.BatchNorm2d(out_channels * BasicBlock.expansion) 
         )
         # shortcut
@@ -66,9 +66,9 @@ class ResNet(nn.Module):
         super().__init__()
         self.in_channels = 64
         self.conv1 = nn.Sequential(
-            nn.conv2d(3,64,kernel_size=3,padding=1,bias=False),
+            nn.Conv2d(3,64,kernel_size=3,padding=1,bias=False),
             nn.BatchNorm2d(64),
-            nn.LeakyReLu(inplace=True)
+            nn.LeakyReLU(inplace=True)
         )
         self.conv2_x = self._make_layer(block, 64, num_block[0], 1)
         self.conv3_x = self._make_layer(block, 128, num_block[1], 2)

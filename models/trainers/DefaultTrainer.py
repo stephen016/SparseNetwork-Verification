@@ -28,7 +28,8 @@ class DefaultTrainer:
                  train_loader: DataLoader,
                  test_loader: DataLoader,
                  metrics: Metrics,
-                 criterion: GeneralModel
+                 criterion: GeneralModel,
+                 run_name
                  ):
         self._test_loader = test_loader
         self._train_loader = train_loader
@@ -39,7 +40,7 @@ class DefaultTrainer:
         self._device = device
         self._global_steps = 0
         self.out = metrics.log_line        
-        DATA_MANAGER.set_date_stamp(addition=arguments.run_name)
+        DATA_MANAGER.set_date_stamp(addition=run_name)
         self._writer = SummaryWriter(os.path.join(DATA_MANAGER.directory, RESULTS_DIR, DATA_MANAGER.stamp, SUMMARY_DIR))   
         self._metrics: Metrics = metrics
         self._metrics.init_training(self._writer)
@@ -64,7 +65,7 @@ class DefaultTrainer:
         """
         
         # unpack
-        x,y = x.to(self._device).float(),y.to(self.device)
+        x,y = x.to(self._device).float(),y.to(self._device)
         
         # update metrics
         self._metrics.update_batch(train)
@@ -85,7 +86,7 @@ class DefaultTrainer:
         # record time
         if "cuda" in str(self._device):
             end.record()
-            torch.cuda.synchronie(self._device)
+            torch.cuda.synchronize(self._device)
             time = start.elapsed_time(end)
         else:
             time=0

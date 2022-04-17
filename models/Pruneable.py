@@ -6,7 +6,7 @@ import torch.nn as nn
 from models.GeneralModel import GeneralModel
 from models.networks.assisting_layers.ContainerLayers import ContainerLinear, ContainerConv2d
 from models.networks.assisting_layers.L0_Layers import L0Linear,L0Conv2d
-from utils.constant import ZERO_SIGMA
+from utils.constants import ZERO_SIGMA
 
 class Pruneable(GeneralModel):
     """

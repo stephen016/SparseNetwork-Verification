@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.nn import init
 from torch.nn.modules import Module 
-from torch.nn.modules.init import _pair as pair 
+from torch.nn.modules.utils import _pair as pair 
 from torch.nn.parameter import Parameter
 
 limit_a, limit_b, epsilon = -.1, 1.1, 1e-6
