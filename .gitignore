@@ -1,2 +1,11 @@
 __pycache__/
 
+# out
+*.out
+
+# 
+.ipynb_checkpoints
+
+gitignored
+
+
