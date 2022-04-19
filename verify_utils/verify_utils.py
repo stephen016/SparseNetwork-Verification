@@ -17,16 +17,16 @@ def verify_single_image(model,image,eps):
     other_classes = set(range(num_classes))
     other_classes.remove(c)
     
-    image = image.numpy().reshape(-1)
+    image = image.cpu().numpy().reshape(-1)
     
     # get the parameters 
-    W,b = get_paramas_list(model)
+    W,b = get_params_list(model)
     
     # get the layer_num
     num_layers = len(W)
     
     # get lower and upper bounds 
-    U,L = get_lower_and_upper_bounds(image,eps,W,b)
+    L,U = get_lower_and_upper_bounds(image,eps,W,b)
     
     # get the shapes for each layer output
     shapes=[]
@@ -46,7 +46,7 @@ def verify_single_image(model,image,eps):
         X_hat.append(cp.Variable(shape=shapes[i]))
         Y.append(cp.Variable(shape=shapes[i+1]))
         if i != (num_layers-1):    
-            A.append(cp.Variable(shape=shapes[i+1]))
+            A.append(cp.Variable(shape=shapes[i+1],boolean=True))
      
     # define Constraints for Liner layer and ReLU
     constraints = []
@@ -55,7 +55,7 @@ def verify_single_image(model,image,eps):
         if j==0:
             constraints += [X_hat[j+1]==W[j]@X_hat[j]+b[j]]
         else:
-            constraints += [X_hat[j+1]==W[j]@Y[j]+b[j]]
+            constraints += [X_hat[j+1]==W[j]@Y[j-1]+b[j]]
         # ReLu for layer j
         constraints += [Y[j][i] <= X_hat[j+1][i] - L[j+1][i] * (1 - A[j][i]) for i in range(Y[j].shape[0])]
         constraints += [Y[j][i] >= X_hat[j+1][i] for i in range(Y[j].shape[0])]
@@ -64,14 +64,16 @@ def verify_single_image(model,image,eps):
     # define the problem
     for other in tqdm(other_classes):
         problem = cp.Problem(objective=cp.Minimize(Y[-1][c]-Y[-1][other]),
-                             constraints = constraints+[cp.norm2(X_hat[0]-image)<=eps,
+                             constraints = constraints+[cp.atoms.norm_inf(image-X_hat[0]) <= eps,
                                                         Y[-1]== W[-1]@Y[-2]+b[-1]]
                              )
         opt = problem.solve('MOSEK')
         if opt<0:
             print('found solution')
             break
-def get_paramas_list(model):
+    return X_hat[0],Y[-1]
+
+def get_params_list(model):
     """
     return a dict containing the model params 
     """
