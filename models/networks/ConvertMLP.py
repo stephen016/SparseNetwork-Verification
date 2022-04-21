@@ -6,13 +6,14 @@ from models.networks.assisting_layers.ContainerLayers import ContainerLinear
 class ConvertMLP(nn.Module):
     def __init__(self,model):
         super(ConvertMLP,self).__init__()
+        self.output_dim = model.output_dim
         modules=[]
         for name,module in model.named_modules():
             if isinstance(module,ContainerLinear):
-                modules.append(nn.Linear(module.in_features,module.out_features))
+                modules.append(nn.Linear(int(module.in_features),int(module.out_features)))
             else:
                 modules.append(module)
-        modules = modules[2:]  
+        modules=modules[2:]
         self.layers=nn.Sequential(*modules)
         self.quant = QuantStub()
         self.dequant = DeQuantStub()
