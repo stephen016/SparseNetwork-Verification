@@ -3,7 +3,7 @@ import cvxpy as cp
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
 
-def verify_single_image(model,image,eps):
+def verify_single_image(model,image,eps,label=None):
     """
     verify single image
     params:
@@ -11,9 +11,14 @@ def verify_single_image(model,image,eps):
     image: input image
     eps: input perturbation budget
     """
-    # predict unperturbed class
+    # define indicator: 0 for verified, 1 for not verified
+    indicator = 0
     num_classes = model.output_dim
-    c = model(image.reshape(1,-1)).argmax().item()
+    if label==None:
+    # predict unperturbed class
+        c = model(image.reshape(1,-1)).argmax().item()
+    else:
+        c=label
     other_classes = set(range(num_classes))
     other_classes.remove(c)
     
@@ -62,7 +67,8 @@ def verify_single_image(model,image,eps):
         constraints += [Y[j][i] <= U[j+1][i] * A[j][i] for i in range(Y[j].shape[0])]
         constraints += [Y[j][i] >= 0 for i in range(Y[j].shape[0])]       
     # define the problem
-    for other in tqdm(other_classes):
+    # for other in tqdm(other_classes): #uncomment to show the progress bar
+    for other in other_classes:    
         problem = cp.Problem(objective=cp.Minimize(Y[-1][c]-Y[-1][other]),
                              constraints = constraints+[cp.atoms.norm_inf(image-X_hat[0]) <= eps,
                                                         Y[-1]== W[-1]@Y[-2]+b[-1]]
@@ -70,8 +76,27 @@ def verify_single_image(model,image,eps):
         opt = problem.solve('MOSEK')
         if opt<0:
             print('found solution')
+            indicator=1
             break
-    return X_hat[0],Y[-1]
+    return X_hat[0],Y[-1],indicator
+
+# function used for multi processing
+def verify_batch_images(model,imgs,labels,eps,total_num,verified_num,lock):
+    """
+    model should be in cpu
+    imgs should be in cpu
+    labels 
+    total_num is a multiprocessing Value object to count the total number of imgs
+    verified_num is a multiprocessing Value objec to count the total number of verified imgs
+    lock is used to prevent race condition
+    """
+    with lock:
+        total_num.value+=len(imgs)
+    for img,label in zip(imgs,labels):
+        _,_,indicator = verify_single_image(model=model,image=img,label=label,eps=eps)
+        if indicator==0:
+            with lock:
+                verified_num.value+=1
 
 def get_params_list(model):
     """
