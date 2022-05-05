@@ -1,0 +1,126 @@
+seml:
+  executable: experiments/main.py
+  name: pruning
+  output_dir: gitignored/logs
+  project_root_dir: ..
+  conda_environment: gr
+
+slurm:
+  experiments_per_job: 1
+  sbatch_options:
+    gres: gpu:1       # num GPUs
+    mem: 8G          # memory
+    cpus-per-task: 1  # num cores
+    time: 0-4:00     # max time, D-HH:MM
+    partition: ['gpu_all']
+
+###### BEGIN PARAMETER CONFIGURATION ######
+
+fixed:
+  arguments:
+    # device
+    device: cuda
+    disable_cuda_benchmark: 1
+    # models
+    model: MLP2
+    disable_masking: 1
+    track_weights: 0
+    enable_rewinding: 0
+    growing_rate: 0.0000
+    outer_layer_pruning: 0
+    l0: 0
+    l0_reg: 1.0
+    l1_reg: 0
+    lp_reg: 0
+    l2_reg: 5e-5
+    hoyer_reg: 0.001
+    beta_ema: 0.999
+    
+    # pruning 
+    prune_criterion: SNAPit
+    #pruning_limit: 0.5
+    snip_steps: 6
+    pruning_rate: 0.00
+    pruning_freq: 1
+    lower_limit: 0.5
+
+    # not using pre-trained model
+    checkpoint_name: None
+    checkpoint_moel: None
+    # dataset 
+    data_set: MNIST
+    batch_size: 512
+    tuning: 0
+    preload_all_data: 0
+    random_shuffle_labels: 0
+
+    # loss
+    loss: CrossEntropy
+
+    # optimizer
+    optimizer: ADAM
+    learning_rate: 2e-3
+
+    # training
+    train_scheme: DefaultTrainer
+    seed: 1234
+    epochs: 10
+
+    grad_noise: 0
+    grad_clip: 10
+
+    eval_freq: 1000
+    save_freq: 1000
+    max_training_minutes: 6120
+    plot_weights_freq: 10
+    prune_delay: 0
+    prune_freq: 1
+    rewind_to: 6
+
+    skip_first_plot: 0
+    disable_histograms: 0
+    disable_saliency: 0
+    disable_confusion: 0
+    disable_weightplot: 0
+    disable_netplot: 0
+    disable_activations: 0
+
+# Uncomment Dataset group depending on which dataset is being used
+
+MNIST:
+  fixed:
+    arguments:
+      input_dim: [1,28,28]
+      output_dim: 10
+      hidden_dim: 64
+      N: 60000
+      mean: (0.1307,)
+      std: (0.3081,)
+
+#CIFAR10:
+#  fixed:
+#    arguments:
+#      input_dim: [3, 32, 32]
+#      output_dim: 10
+#      hidden_dim: 512
+#      N: 60000
+#      mean:  (0.4914, 0.4822, 0.4465)
+#      std: (0.2471, 0.2435, 0.2616)
+
+#CIFAR100:
+#  fixed:
+#    arguments:
+#      input_dim: [3, 32, 32]
+#      output_dim: 100
+#      hidden_dim: 512
+#      N: 50000
+#      mean:  (0.5071, 0.4865, 0.4409)
+#      std: (0.2673, 0.2564, 0.2762)
+
+grid:
+  arguments:
+    pruning_limit:
+      type: choice
+      options:
+        - 0.5
+        - 0.75

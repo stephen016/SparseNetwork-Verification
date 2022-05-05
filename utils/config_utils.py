@@ -14,7 +14,7 @@ Handles loading config and autoconfig
 """
 
 def configure_seeds(arguments, device):
-    seed = arguments.seed
+    seed = arguments['seed']
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
@@ -23,7 +23,7 @@ def configure_seeds(arguments, device):
 
 
 def configure_device(arguments):
-    device = arguments.device
+    device = arguments['device']
     assert "cpu" in device or torch.cuda.is_available(), f"DEVICE {device} UNAVAILABLE"
     return torch.device(device)
 

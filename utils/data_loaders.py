@@ -358,19 +358,19 @@ def preloading(arguments, test_set, train_set):
 
 
 def load(arguments, test_set, train_set):
-    if arguments.tuning:
+    if arguments['tuning']:
         print("Running in tuning mode, omit testset")
         total_length = len(train_set)
         train_length = int(0.8 * total_length)
         val_length = total_length - train_length
         train_set, test_set = torch.utils.data.random_split(train_set, [train_length, val_length])
 
-    if arguments.random_shuffle_labels:
+    if arguments['random_shuffle_labels']:
         print("randomly shuffling labels")
         test_set.targets = test_set.targets[torch.randperm(len(test_set.targets))]
         train_set.targets = train_set.targets[torch.randperm(len(train_set.targets))]
 
-    if arguments.preload_all_data:
+    if arguments['preload_all_data']:
         test_loader, train_loader = preloading(arguments, test_set, train_set)
 
     else:
@@ -485,14 +485,14 @@ def traditional_loading(arguments, test_set, train_set):
     workers = NUM_WORKERS
     train_loader = torch.utils.data.DataLoader(
         train_set,
-        batch_size=arguments.batch_size,
+        batch_size=arguments['batch_size'],
         shuffle=True,
         pin_memory=True,
         num_workers=workers
     )
     test_loader = torch.utils.data.DataLoader(
         test_set,
-        batch_size=arguments.batch_size,
+        batch_size=arguments['batch_size'],
         shuffle=False,
         pin_memory=True,
         num_workers=workers
@@ -501,7 +501,7 @@ def traditional_loading(arguments, test_set, train_set):
 
 
 def get_rubbish_loaders(arguments=None):
-    bs = 10 if arguments is None else arguments.batch_size
+    bs = 10 if arguments is None else arguments['batch_size']
     train_loader = torch.utils.data.DataLoader(
         RubbishSet(),
         batch_size=bs,

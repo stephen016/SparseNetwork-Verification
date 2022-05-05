@@ -53,7 +53,7 @@ class DefaultTrainer:
         batch = next(iter(self._test_loader))
         self.saliency = Saliency(model,device,batch[0][:8])
         self._metrics.write_arguments(arguments)
-        self._flopcounter = FLOPCounter(model, batch[0][:8], self._arguments.batch_size, device=device)
+        self._flopcounter = FLOPCounter(model, batch[0][:8], self._arguments['batch_size'], device=device)
         self._metrics.model_to_tensorboard(model, timestep=-1)
     
     def _batch_iteration(self,
@@ -124,9 +124,9 @@ class DefaultTrainer:
     def _backward_pass(self,loss):
         """ implementation of a backward pass """
         loss.backward()
-        self._model.insert_noise_for_gradient(self._arguments.grad_noise)        
-        if self._arguments.grad_clip > 0:
-            torch.nn.utils.clip_grad_norm_(self._model.parameters(), self._arguments.grad_clip)
+        self._model.insert_noise_for_gradient(self._arguments['grad_noise'])        
+        if self._arguments['grad_clip']> 0:
+            torch.nn.utils.clip_grad_norm_(self._model.parameters(), self._arguments['grad_clip'])
         self._optimizer.step()
         if self._model.is_maskable:
             self._model.apply_weight_mask()
@@ -161,7 +161,7 @@ class DefaultTrainer:
     def _log(self,batch_num):
         """ logs to terminal and tensorboard if the time is right"""
        
-        if (batch_num % self._arguments.eval_freq) ==0:
+        if (batch_num % self._arguments['eval_freq']) ==0:
             # validate on test and train set
             train_acc,train_loss = np.mean(self._acc_buffer),np.mean(self._loss_buffer)
             test_acc,test_loss,test_elapsed = self.validate()
@@ -240,30 +240,30 @@ class DefaultTrainer:
         try:
             self.out(
                 f"{PRINTCOLOR_BOLD}Started training{PRINTCOLOR_END}")
-            if self._arguments.skip_first_plot:
+            if self._arguments['skip_first_plot']:
                 self._metrics.handle_weight_plotting(0,trainer_ns=self)
             
             # if snip we prune before training
             
-            if self._arguments.prune_criterion in SINGLE_SHOT:
-                self._criterion.prune(self._arguments.pruning_limit,
+            if self._arguments['prune_criterion'] in SINGLE_SHOT:
+                self._criterion.prune(self._arguments['pruning_limit'],
                                       train_loader=self._train_loader,
                                       manager = DATA_MANAGER)
-                if self._arguments.prune_criterion in STRUCTURED_SINGLE_SHOT:
-                    self._optimizer = find_right_model(OPTIMS, self._arguments.optimizer,
+                if self._arguments['prune_criterion'] in STRUCTURED_SINGLE_SHOT:
+                    self._optimizer = find_right_model(OPTIMS, self._arguments['optimizer'],
                                                        params=self._model.parameters(),
-                                                       lr=self._arguments.learning_rate,
-                                                       weight_decay=self._arguments.l2_reg)
+                                                       lr=self._arguments['learning_rate'],
+                                                       weight_decay=self._arguments['l2_reg'])
                     self._metrics.model_to_tensorboard(self._model, timestep=epoch)
             # do training
-            for epoch in range(epoch, self._arguments.epochs + epoch):
+            for epoch in range(epoch, self._arguments['epochs'] + epoch):
                 self.out(f"\n\n{PRINTCOLOR_BOLD}EPOCH {epoch} {PRINTCOLOR_END} \n\n")
 
                 # do epoch
                 self._epoch_iteration()
 
                 # plotting
-                if (epoch % self._arguments.plot_weights_freq) == 0 and self._arguments.plot_weights_freq > 0:
+                if (epoch % self._arguments['plot_weights_freq']) == 0 and self._arguments['plot_weights_freq'] > 0:
                     self._metrics.handle_weight_plotting(epoch, trainer_ns=self)
 
                 # do all related to pruning
@@ -272,7 +272,7 @@ class DefaultTrainer:
                 # save what needs to be saved
                 self._handle_backing_up(epoch)
 
-            if self._arguments.skip_first_plot:
+            if self._arguments['skip_first_plot']:
                 self._metrics.handle_weight_plotting(epoch + 1, trainer_ns=self)
 
             # example last save
@@ -297,7 +297,7 @@ class DefaultTrainer:
         self._writer.close()            
 
     def _handle_backing_up(self, epoch):
-        if (epoch % self._arguments.save_freq) == 0 and epoch > 0:
+        if (epoch % self._arguments['save_freq']) == 0 and epoch > 0:
             self.out("\nSAVING...\n")
             save_models(
                 [self._model, self._metrics],
@@ -314,16 +314,16 @@ class DefaultTrainer:
             if self._is_not_finished_pruning():
                 self.out("\nPRUNING...\n")
                 self._criterion.prune(
-                    percentage=self._arguments.pruning_rate,
+                    percentage=self._arguments['pruning_rate'],
                     train_loader=self._train_loader,
                     manager=DATA_MANAGER
                 )
-                if self._arguments.prune_criterion in DURING_TRAINING:
+                if self._arguments['prune_criterion'] in DURING_TRAINING:
                     self._optimizer = find_right_model(
-                        OPTIMS, self._arguments.optimizer,
+                        OPTIMS, self._arguments['optimizer'],
                         params=self._model.parameters(),
-                        lr=self._arguments.learning_rate,
-                        weight_decay=self._arguments.l2_reg
+                        lr=self._arguments['learning_rate'],
+                        weight_decay=self._arguments['l2_reg']
                     )
                     self._metrics.model_to_tensorboard(self._model, timestep=epoch)
                 if self._model.is_rewindable:
@@ -331,7 +331,7 @@ class DefaultTrainer:
                     self._model.do_rewind()
             if self._model.is_growable:
                 self.out("growing too...\n")
-                self._criterion.grow(self._arguments.growing_rate)
+                self._criterion.grow(self._arguments['growing_rate'])
 
         if self._is_checkpoint_time(epoch):
             self.out(f"\nCreating weights checkpoint at epoch {epoch}\n")
@@ -339,12 +339,12 @@ class DefaultTrainer:
     
 
     def _is_not_finished_pruning(self):
-        return self._arguments.pruning_limit > self._model.pruned_percentage \
+        return self._arguments['pruning_limit'] > self._model.pruned_percentage \
                or \
                (
-                       self._arguments.prune_criterion in DURING_TRAINING
+                       self._arguments['prune_criterion'] in DURING_TRAINING
                        and
-                       self._arguments.pruning_limit > self._model.structural_sparsity
+                       self._arguments['pruning_limit'] > self._model.structural_sparsity
                )
 
     @staticmethod
@@ -354,26 +354,26 @@ class DefaultTrainer:
         return correct / output.shape[0]
 
     def _is_checkpoint_time(self, epoch: int):
-        return epoch == self._arguments.rewind_to and self._model.is_rewindable
+        return epoch == self._arguments['rewind_to'] and self._model.is_rewindable
 
     def _is_pruning_time(self, epoch: int):
-        if self._arguments.prune_criterion == "EmptyCrit":
+        if self._arguments['prune_criterion'] == "EmptyCrit":
             return False
-        epoch -= self._arguments.prune_delay
-        return (epoch % self._arguments.prune_freq) == 0 and \
+        epoch -= self._arguments['prune_delay']
+        return (epoch % self._arguments['prune_freq']) == 0 and \
                epoch > 0 and \
                self._model.is_maskable and \
-               self._arguments.prune_criterion not in SINGLE_SHOT
+               self._arguments['prune_criterion'] not in SINGLE_SHOT
 
     def _check_exit_conditions_epoch_iteration(self, patience=1):
 
         time_passed = datetime.now() - DATA_MANAGER.actual_date
         # check if runtime is expired
-        if (time_passed.total_seconds() > (self._arguments.max_training_minutes * 60)) \
+        if (time_passed.total_seconds() > (self._arguments['max_training_minutes'] * 60)) \
                 and \
-                self._arguments.max_training_minutes > 0:
+                self._arguments['max_training_minutes'] > 0:
             raise KeyboardInterrupt(
-                f"Process killed because {self._arguments.max_training_minutes} minutes passed "
+                f"Process killed because {self._arguments['max_training_minutes']} minutes passed "
                 f"since {DATA_MANAGER.actual_date}. Time now is {datetime.now()}")
         if patience == 0:
             raise NotImplementedError("feature to implement",

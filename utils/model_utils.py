@@ -16,7 +16,7 @@ def _read_all_class_names():
     private function that imports all class references in a dictionary
     """    
     for typ in types:
-        for name in os.listdir(os.path.join("..",MODELS_DIR,typ)):
+        for name in os.listdir(os.path.join(".",MODELS_DIR,typ)):
             if not("__" in name) and ".py" in name:
                 short_name = str(name.split(".")[0])
                 short_name:str

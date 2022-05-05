@@ -191,23 +191,23 @@ class Metrics:
             canvas, fig, g, histograms, layer_active, layer_nodes, sparsities = self.extract_from_layers(epoch,
                                                                                                          trainer_ns)
 
-            if trainer_ns._arguments.disable_netplot:
+            if trainer_ns._arguments['disable_netplot']:
                 print("doing netplot")
                 self._build_network_representation(canvas, epoch, fig, g, layer_active, layer_nodes)
 
-            if trainer_ns._arguments.disable_histograms:
+            if trainer_ns._arguments['disable_histograms']:
                 print("doing histograms")
                 self._writer.add_histogram("weight/magnitude", histograms, epoch)
                 self._writer.add_histogram("layer/sparsity", sparsities, epoch)
 
-            if trainer_ns._arguments.disable_confusion:
+            if trainer_ns._arguments['disable_confusion']:
                 print("doing confusion matrix")
                 self._write_confusion_matrix(epoch, trainer_ns)
 
-            if trainer_ns._arguments.disable_saliency:
+            if trainer_ns._arguments['disable_saliency']:
                 print("doing saliencies")
                 self._write_saliency(epoch, trainer_ns)
-                if not trainer_ns._arguments.l0:
+                if not trainer_ns._arguments['l0']:
                     self._write_snip(epoch, trainer_ns)
 
             self._writer.flush()
@@ -229,10 +229,10 @@ class Metrics:
 
         i = 0  # have to count manually becauseof l0
         for name, element in (
-                trainer_ns._model.named_modules() if trainer_ns._arguments.l0 else trainer_ns._model.mask.items()):
+                trainer_ns._model.named_modules() if trainer_ns._arguments['l0'] else trainer_ns._model.mask.items()):
 
             # is it a leaf node?
-            if trainer_ns._arguments.l0 and (not "L0" in str(type(element))):
+            if trainer_ns._arguments['l0'] and (not "L0" in str(type(element))):
                 continue
             i += 1
 
@@ -240,7 +240,7 @@ class Metrics:
             flattend = self._get_flattend(element, name, trainer_ns)
 
             # append to histogram data
-            if trainer_ns._arguments.disable_histograms:
+            if trainer_ns._arguments['disable_histograms']:
                 sparsities, weight_histograms = self._get_histogram_data(flattend, sparsities, weight_histograms)
 
             # handle weight matrix
@@ -252,7 +252,7 @@ class Metrics:
         return canvas, fig, g, weight_histograms, layer_active, layer_nodes, sparsities
 
     def _get_flattend(self, element, name, trainer_ns):
-        if trainer_ns._arguments.l0:
+        if trainer_ns._arguments['l0']:
             flattend = element.sample_weights().flatten()
         else:
             flattend = trainer_ns._model.state_dict()[name].flatten()
@@ -272,7 +272,7 @@ class Metrics:
     def _write_plottable_weight_matrix(self, element, epoch, name, trainer_ns):
 
         # get matrix from right location
-        if trainer_ns._arguments.l0:
+        if trainer_ns._arguments['l0']:
             plottable = element.sample_weights().cpu()
             if len(plottable.shape) == 2:
                 plottable = plottable.t()
@@ -280,7 +280,7 @@ class Metrics:
             plottable = trainer_ns._model.state_dict()[name].cpu()
 
         # get matrix in right sizes
-        graph = trainer_ns._arguments.disable_netplot
+        graph = trainer_ns._arguments['disable_netplot']
         first_dim = plottable.shape[0]
         if len(plottable.shape) == 4:
             graph = False
@@ -288,7 +288,7 @@ class Metrics:
 
         plottable_ = plottable.view(first_dim, -1)
 
-        if trainer_ns._arguments.disable_weightplot:
+        if trainer_ns._arguments['disable_weightplot']:
             # reformat image
             plottable = (plottable_ / 6) * 255
             plottable = torch.stack(
@@ -325,7 +325,7 @@ class Metrics:
                               .view_as(y)
                               .cpu()
                               .numpy())
-        cm = 1 - (cm / (trainer_ns._arguments.batch_size / trainer_ns._arguments.output_dim))
+        cm = 1 - (cm / (trainer_ns._arguments['batch_size'] / trainer_ns._arguments['output_dim']))
 
         # write
         self._writer.add_image("network/confusion", cm.reshape(1, *cm.shape), epoch)

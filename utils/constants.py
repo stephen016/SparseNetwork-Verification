@@ -6,7 +6,7 @@ from utils.data_manager import DataManager
 
 PROJ_NAME = "SparseNetwork-Verification"
 
-WORKING_DIR_PATH = "."
+WORKING_DIR_PATH = "/nfs/homedirs/wangxun/robustness/SparseNetwork-Verification/"
 
 # output
 RESULTS_DIR = "results/"
