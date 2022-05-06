@@ -1,0 +1,45 @@
+seml:
+  executable: experiments/verify.py
+  name: verify
+  output_dir: gitignored/logs
+  project_root_dir: ..
+  conda_environment: gr
+
+slurm:
+  experiments_per_job: 1
+  sbatch_options:
+    gres: gpu:1       # num GPUs
+    mem: 8G          # memory
+    cpus-per-task: 16  # num cores
+    time: 0-4:00     # max time, D-HH:MM
+    partition: ['gpu_all']
+
+fixed:
+  arguments:
+    # device
+    device: cpu
+    num_process: 16
+    seed: 1234
+    # dataset related
+    data_set: MNIST
+    mean: (0.1307,)
+    std: (0.3081,)
+    tuning: 0
+    random_shuffle_labels: 0
+    preload_all_data: 0
+    batch_size: 512
+    #eps: 0.005
+    # model directory
+    checkpoint_name: 2022-05-05_22.42.08_model=MLP2_dataset=MNIST_prune-criterion=SNAPit_pruning-limit=0.5_train-scheme=DefaultTrainer_seed=1234
+    checkpoint_model: MLP2_mod_finished
+
+grid:
+  arguments:
+      eps:
+        type: choice
+        options:
+          - 0.001
+          - 0.01
+          - 0.1
+
+
