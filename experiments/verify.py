@@ -24,7 +24,7 @@ def verify(arguments):
     checkpoint_name = arguments['checkpoint_name']
     checkpoint_model = arguments['checkpoint_model']
     model_path = os.path.join(RESULTS_DIR,checkpoint_name,MODELS_DIR,checkpoint_model)
-    model=DATA_MANAGER.load_python_obj(model_path).to(device)
+    model=DATA_MANAGER.load_python_obj(model_path,device='cpu').to(device)
 
     configure_seeds(arguments,device)
     # load dataset
@@ -77,14 +77,14 @@ def config():
 
 @ex.automain
 def run(arguments):
-    logging.info('Received the following configuration:')
-    logging.info(f"dataset:{arguments['data_set']}, model:{arguments['checkpoint_model']}, eps:{arguments['eps']},num_process:{arguments['num_process']}")
-    loop = 5
+
+    loop = 3
     total_time = timeit.timeit(lambda: verify(arguments), number=loop)
-    logging.info(f"average running time: {total_time/loop}s")
-    
     results = verify(arguments)
+    
+    logging.info(f"dataset:{arguments['data_set']}, model:{arguments['checkpoint_model']}, eps:{arguments['eps']},num_process:{arguments['num_process']}")
     logging.info(f"total_num:{results['total_num']}, failed_num:{results['failed_num']}")
     logging.info(f"adversarial accuracy: {(results['total_num']-results['failed_num'])/results['total_num']}")
+    logging.info(f"average running time: {total_time/loop}s")
     
     return results
