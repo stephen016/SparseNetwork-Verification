@@ -55,7 +55,7 @@ class Metrics:
 
         txt = '<table> <thead> <tr> <td> <strong> Argument </strong> </td> <td> <strong> Value </strong> </td> </tr> </thead>'
         txt += ' <tbody> '
-        for name, var in vars(args).items():
+        for name, var in args.items():
             txt += '<tr> <td> <code>' + str(name) + ' </code> </td> ' + '<td> <code> ' + str(
                 var) + ' </code> </td> ' + '<tr> '
         txt += '</tbody> </table>'
