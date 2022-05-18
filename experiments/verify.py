@@ -77,14 +77,16 @@ def config():
 
 @ex.automain
 def run(arguments):
-
+    logging.info('Received the following configuration:')
+    logging.info(f"dataset:{arguments['data_set']}, model:{arguments['checkpoint_model']}, eps:{arguments['eps']},num_process:{arguments['num_process']}")
+    
     loop = 3
     total_time = timeit.timeit(lambda: verify(arguments), number=loop)
     results = verify(arguments)
     
-    logging.info(f"dataset:{arguments['data_set']}, model:{arguments['checkpoint_model']}, eps:{arguments['eps']},num_process:{arguments['num_process']}")
     logging.info(f"total_num:{results['total_num']}, failed_num:{results['failed_num']}")
     logging.info(f"adversarial accuracy: {(results['total_num']-results['failed_num'])/results['total_num']}")
+    print(f"num of process: {arguments['num_process']}")
     logging.info(f"average running time: {total_time/loop}s")
     
     return results

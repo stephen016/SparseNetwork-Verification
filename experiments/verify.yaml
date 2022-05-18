@@ -1,6 +1,6 @@
 seml:
   executable: experiments/verify.py
-  name: verify
+  name: verify_MLP2_0.5_GPUgroup
   output_dir: gitignored/logs
   project_root_dir: ..
   conda_environment: gr
@@ -11,14 +11,14 @@ slurm:
     gres: gpu:1       # num GPUs
     mem: 8G          # memory
     cpus-per-task: 16  # num cores
-    time: 0-4:00     # max time, D-HH:MM
+    time: 0-8:00     # max time, D-HH:MM
     partition: ['gpu_all']
 
 fixed:
   arguments:
     # device
     device: cpu
-    num_process: 16
+    #num_process: 8
     seed: 1234
     # dataset related
     data_set: MNIST
@@ -31,6 +31,9 @@ fixed:
     #eps: 0.005
     # model directory
     checkpoint_name: 2022-05-05_22.42.08_model=MLP2_dataset=MNIST_prune-criterion=SNAPit_pruning-limit=0.5_train-scheme=DefaultTrainer_seed=1234
+    #checkpoint_name: 2022-05-11_17.20.23_model=MLP3_dataset=MNIST_prune-criterion=SNAPit_pruning-limit=0.5_train-scheme=DefaultTrainer_seed=1234
+    #checkpoint_name: 2022-05-11_17.21.37_model=MLP3_dataset=MNIST_prune-criterion=SNAPit_pruning-limit=0.75_train-scheme=DefaultTrainer_seed=1234
+    #checkpoint_name: 2022-05-11_17.27.03_model=MLP3_dataset=MNIST_prune-criterion=SNAPit_pruning-limit=0.9_train-scheme=DefaultTrainer_seed=1234
     checkpoint_model: MLP2_mod_finished
 
 grid:
@@ -39,7 +42,12 @@ grid:
         type: choice
         options:
           - 0.001
-          - 0.01
-          - 0.1
-
-
+          #- 0.003
+          #- 0.01
+          #- 0.03
+          #- 0.1
+      num_process:
+        type: choice
+        options:
+          - 8
+          - 16

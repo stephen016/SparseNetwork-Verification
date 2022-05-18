@@ -1,6 +1,6 @@
 seml:
   executable: experiments/main.py
-  name: pruning
+  name: pruning_MLP3
   output_dir: gitignored/logs
   project_root_dir: ..
   conda_environment: gr
@@ -22,7 +22,7 @@ fixed:
     device: cuda
     disable_cuda_benchmark: 1
     # models
-    model: MLP2
+    model: MLP3
     disable_masking: 1
     track_weights: 0
     enable_rewinding: 0
@@ -64,7 +64,7 @@ fixed:
     # training
     train_scheme: DefaultTrainer
     seed: 1234
-    epochs: 10
+    epochs: 20
 
     grad_noise: 0
     grad_clip: 10
@@ -124,3 +124,4 @@ grid:
       options:
         - 0.5
         - 0.75
+        - 0.9
