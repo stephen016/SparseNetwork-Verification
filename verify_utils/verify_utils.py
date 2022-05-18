@@ -75,28 +75,28 @@ def verify_single_image(model,image,eps,label=None):
                              )
         opt = problem.solve('MOSEK')
         if opt<0:
-            print('found solution')
+            #print('found solution')
             indicator=1
             break
     return X_hat[0],Y[-1],indicator
 
 # function used for multi processing
-def verify_batch_images(model,imgs,labels,eps,total_num,verified_num,lock):
+def verify_batch_images(model,imgs,labels,eps,total_num,failed_num,lock):
     """
     model should be in cpu
     imgs should be in cpu
     labels 
     total_num is a multiprocessing Value object to count the total number of imgs
-    verified_num is a multiprocessing Value objec to count the total number of verified imgs
+    failed_num is a multiprocessing Value objec to count the total number of not verified imgs
     lock is used to prevent race condition
     """
     with lock:
         total_num.value+=len(imgs)
     for img,label in zip(imgs,labels):
         _,_,indicator = verify_single_image(model=model,image=img,label=label,eps=eps)
-        if indicator==0:
+        if indicator==1:
             with lock:
-                verified_num.value+=1
+                failed_num.value+=1
 
 def get_params_list(model):
     """
