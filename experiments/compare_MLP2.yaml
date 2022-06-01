@@ -1,0 +1,48 @@
+seml:
+  executable: experiments/compare_MLP2.py
+  name: compareMLP2
+  output_dir: gitignored/logs
+  project_root_dir: ..
+  conda_environment: gr
+
+slurm:
+  experiments_per_job: 1
+  sbatch_options:
+    mem: 16G          # memory
+    cpus-per-task: 8  # num cores
+    time: 2-00:00     # max time, D-HH:MM
+    partition: ['cpu']
+    qos: 'cpu'
+
+fixed:
+  arguments:
+    # device
+    device: cpu
+    #num_process: 8
+    seed: 1234
+    # dataset related
+    data_set: MNIST
+    mean: (0.1307,)
+    std: (0.3081,)
+    tuning: 0
+    random_shuffle_labels: 0
+    preload_all_data: 0
+    batch_size: 64
+    #eps: 0.005
+    loop: 1
+    # model directory
+    checkpoint_name : 2022-05-20_16.19.39_model=MLP2_dataset=MNIST_prune-criterion=SNAPit_pruning-limit=0.75_train-scheme=DefaultTrainer_seed=1234
+
+    checkpoint_model1: MLP2_mod_finished
+    checkpoint_model2: ConvertMLP2_mod_quantized
+
+grid:
+  arguments:
+      eps:
+        type: choice
+        options:
+          - 0.1
+          - 0.3
+          - 1
+          - 3
+
