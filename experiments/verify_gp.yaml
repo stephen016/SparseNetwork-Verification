@@ -1,0 +1,54 @@
+seml:
+  executable: experiments/verify_gp.py
+
+  name: verify_gp
+  output_dir: gitignored/logs
+  project_root_dir: ..
+  conda_environment: gr
+
+slurm:
+  experiments_per_job: 1
+  sbatch_options:
+    mem: 8G          # memory
+    cpus-per-task: 8  # num cores
+    time: 2-00:00     # max time, D-HH:MM
+    partition: ['cpu']
+    qos: 'cpu'
+
+fixed:
+  arguments:
+    # device
+    device: cpu
+    #num_process: 8
+    seed: 1234
+    # dataset related
+    data_set: MNIST
+    mean: (0.1307,)
+    std: (0.3081,)
+    tuning: 0
+    random_shuffle_labels: 0
+    preload_all_data: 0
+    #batch_size: 512
+    batch_size: 32
+    #eps: 0.005
+    # model directory
+    checkpoint_name : "2022-05-20_16.19.39_model=MLP2_dataset=MNIST_prune-criterion=SNAPit_pruning-limit=0.75_train-scheme=DefaultTrainer_seed=1234"
+    checkpoint_model : "MLP2_mod_finished"
+    #checkpoint_name: "2022-05-11_17.20.23_model=MLP3_dataset=MNIST_prune-criterion=SNAPit_pruning-limit=0.5_train-scheme=DefaultTrainer_seed=1234"
+    #checkpoint_model : "MLP3_mod_finished"
+    #checkpoint_name : "2022-05-25_00.29.35_test_base_MLP5"
+    #checkpoint_model : "MLP5_mod_loaded"
+    
+grid:
+  arguments:
+      eps:
+        type: choice
+        options:
+          #- 0.003
+          #- 0.01
+          #- 0.03
+          #- 0.1
+          - 0.3
+          #- 1
+          #- 3
+          
