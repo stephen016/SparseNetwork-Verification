@@ -75,7 +75,7 @@ def verify_single_image(model,image,eps,label=None):
                              )
         opt = problem.solve('MOSEK')
         if opt<0:
-            #print('found solution')
+            print('found solution')
             indicator=1
             break
     return X_hat[0],Y[-1],indicator
@@ -111,7 +111,8 @@ def get_params_list(model):
     return W,b
 
 def get_lower_and_upper_bounds(x,eps,W,b):
-    # construct W_+ and W_- for each layer
+        # construct W_+ and W_- for each layer
+    
     W_p = []
     W_m = []
     for weight in W:
@@ -124,8 +125,13 @@ def get_lower_and_upper_bounds(x,eps,W,b):
     L.append(x-eps)
     U.append(x+eps)
     # use interval arithmetic to get bounds for each layer
-    for i in range(len(W)-1):
-        U.append(W_p[i]@U[i]-W_m[i]@L[i]+b[i])
-        L.append(W_p[i]@L[i]-W_m[i]@U[i]+b[i])        
+    for i in range(len(W)):
+        if i==0 : # first layer doesn't have relu
+            U.append(W_p[i]@U[i]-W_m[i]@L[i]+b[i])
+            L.append(W_p[i]@L[i]-W_m[i]@U[i]+b[i])
+        else: # other layer has relu, apply relu to lower and upper bounds of previous layer
+            U_=(U[i]>0)*U[i]
+            L_=(L[i]>0)*L[i]
+            U.append(W_p[i]@U_-W_m[i]@L_+b[i])
+            L.append(W_p[i]@L_-W_m[i]@U_+b[i])
     return L,U
-        
