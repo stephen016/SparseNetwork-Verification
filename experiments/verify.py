@@ -43,6 +43,10 @@ def verify(arguments):
     batch_num=1
     for imgs,labels in test_loader: # iterate over all test data
         print(f"verifying batch {batch_num}/{total_batch_num}")
+        # using only one batch
+        print("only verify 1st batch")
+        if batch_num >1:
+            break
         batch_num+=1
         labels=model(imgs).argmax(axis=1).numpy()
         processes=[]
@@ -60,6 +64,7 @@ def verify(arguments):
             p.start()
         for p in processes:
             p.join()
+        
     return {"total_num":total_num.value, "failed_num":failed_num.value}
 
 @ex.post_run_hook
@@ -80,7 +85,7 @@ def run(arguments):
     logging.info('Received the following configuration:')
     logging.info(f"dataset:{arguments['data_set']}, model:{arguments['checkpoint_model']}, eps:{arguments['eps']},num_process:{arguments['num_process']}")
     
-    loop = 3
+    loop = 1
     total_time = timeit.timeit(lambda: verify(arguments), number=loop)
     results = verify(arguments)
     

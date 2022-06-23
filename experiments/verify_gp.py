@@ -54,21 +54,42 @@ def verify(arguments):
     acc = correct/total
     print(f"model accuracy: {acc}")
 
-    # only test one batch data
-    print("verify 1st batch data")
+    # only verify one batch data
+    print("verify first batch data")
     imgs,labels = next(iter(test_loader))
-    # get original accuracy
     verified_num = 0
     infeasible_num = 0
+    correct_num=0
     data_num=len(labels)
-    start=time.time()
-    for img in imgs:
-        veridied,infeasible = verify_single_image_gp(model,img,eps)
-        verified_num+=veridied
-        infeasible_num+=infeasible
-    end=time.time()
-    time_per_img =(end-start)/data_num
-    return {"accuracy":acc,"data_num":data_num,"verified_num":verified_num, "infeasible_num":infeasible_num,
+    
+    i=0
+    incorrect=[]
+    unverified=[]
+    times=[]
+    for (img,label) in zip(imgs,labels):
+        print(f"##### Processing image: {i} #####")
+        # only verify correctly predicted imgs
+        pred=torch.argmax(model(img),axis=1)
+        if pred == label:
+            correct_num+=1
+            print("correct classified, process verify")
+            # only count time for processing verification
+            start=time.time()
+            verified,infeasible = verify_single_image_gp(model,img,eps)
+            end = time.time()
+            times.append(end-start)
+            verified_num+=verified
+            infeasible_num+=infeasible
+            if not verified:
+                unverified.append(i)
+        else:
+            print("incorrect classified, skip verify")
+            incorrect.append(i)
+
+        i+=1
+    time_per_img = np.mean(times)
+    
+    return {"accuracy":acc,"data_num":data_num,"correct_num":correct_num,"verified_num":verified_num, "infeasible_num":infeasible_num,
             "time_per_img":time_per_img}
 
 @ex.post_run_hook
@@ -92,9 +113,9 @@ def run(arguments):
     
     results = verify(arguments)
     logging.info(f"model accuracy:{results['accuracy']}")
-    logging.info(f"test_verify_num:{results['data_num']}, verified_num:{results['verified_num']}")
+    logging.info(f"test_verify_num:{results['data_num']}, correct_num:{results['correct_num']},verified_num:{results['verified_num']}")
     logging.info(f"infeasible_num: {results['infeasible_num']}")
-    logging.info(f"adversarial accuracy: {results['verified_num']/(results['data_num']-results['infeasible_num'])}")
+    logging.info(f"adversarial accuracy: {results['verified_num']/(results['correct_num']-results['infeasible_num'])}")
     logging.info(f"running time: {results['time_per_img']}s per img")
     
     return results
