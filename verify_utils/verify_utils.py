@@ -40,6 +40,12 @@ def verify_single_image(model,image,eps,label=None):
     # add output shape
     shapes.append(num_classes)
     
+    # get unstable_nums
+    unstable_nums=[]
+    # don't use the first layer and final layer
+    for l,u in zip(L[1:-1],U[1:-1]):
+        unstable_nums.append(int(((l<0) & (u>0)).sum()))
+
     # define variables (X_hat,Y,A)
     # X_hat[0] is the input
     # Y[-1] is the output
@@ -50,30 +56,43 @@ def verify_single_image(model,image,eps,label=None):
     for i in range(num_layers):
         X_hat.append(cp.Variable(shape=shapes[i]))
         Y.append(cp.Variable(shape=shapes[i+1]))
-        if i != (num_layers-1):    
-            A.append(cp.Variable(shape=shapes[i+1],boolean=True))
+        if i != (num_layers-1):
+            if unstable_nums[i]==0:
+                A.append(None)
+            else:
+                A.append(cp.Variable(shape=unstable_nums[i],boolean=True))
      
     # define Constraints for Liner layer and ReLU
     constraints = []
-    for j in range(num_layers-1):
+    for i in range(num_layers-1):
         # Linear for layer j
-        if j==0:
-            constraints += [X_hat[j+1]==W[j]@X_hat[j]+b[j]]
+        if i==0:
+            constraints += [X_hat[i+1]==W[i]@X_hat[i]+b[i]]
         else:
-            constraints += [X_hat[j+1]==W[j]@Y[j-1]+b[j]]
+            constraints += [X_hat[i+1]==W[i]@Y[i-1]+b[i]]
         # ReLu for layer j
-        constraints += [Y[j][i] <= X_hat[j+1][i] - L[j+1][i] * (1 - A[j][i]) for i in range(Y[j].shape[0])]
-        constraints += [Y[j][i] >= X_hat[j+1][i] for i in range(Y[j].shape[0])]
-        constraints += [Y[j][i] <= U[j+1][i] * A[j][i] for i in range(Y[j].shape[0])]
-        constraints += [Y[j][i] >= 0 for i in range(Y[j].shape[0])]       
+        k=0
+        for j in range(shapes[i+1]):
+            if L[i+1][j]>=0:
+                constraints+=[Y[i][j]==X_hat[i+1][j]]
+            elif U[i+1][j]<=0:
+                constraints+=[Y[i][j]==0]
+            else:
+                constraints += [Y[i][j] <= X_hat[i+1][j] - L[i+1][j] * (1 - A[i][k]) ]
+                constraints += [Y[i][j] >= X_hat[i+1][j] ]
+                constraints += [Y[i][j] <= U[i+1][j] * A[i][k] ]
+                constraints += [Y[i][j] >= 0 ]  
+                k+=1     
     # define the problem
     # for other in tqdm(other_classes): #uncomment to show the progress bar
     for other in other_classes:    
+        print(f"verifying label:{other}")
         problem = cp.Problem(objective=cp.Minimize(Y[-1][c]-Y[-1][other]),
                              constraints = constraints+[cp.atoms.norm_inf(image-X_hat[0]) <= eps,
                                                         Y[-1]== W[-1]@Y[-2]+b[-1]]
                              )
         opt = problem.solve('MOSEK')
+        print(f"optimal:{opt}")
         if opt<0:
             print('found solution')
             indicator=1
@@ -126,7 +145,7 @@ def get_lower_and_upper_bounds(x,eps,W,b):
     U.append(x+eps)
     # use interval arithmetic to get bounds for each layer
     for i in range(len(W)):
-        if i==0 : # first layer doesn't have relu
+        if i==0 or i==len(W) : # first layer and last layer doesn't have relu
             U.append(W_p[i]@U[i]-W_m[i]@L[i]+b[i])
             L.append(W_p[i]@L[i]-W_m[i]@U[i]+b[i])
         else: # other layer has relu, apply relu to lower and upper bounds of previous layer
